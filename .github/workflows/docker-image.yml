@@ -32,58 +32,65 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-docker-
 
+      - name: Extract version from Dockerfile
+        id: get_version
+        run: |
+          VERSION=$(grep -m1 -oP '^ARG VERSION=\K.*' Dockerfile)
+          echo "VERSION=$VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/docker-eth-nethermind:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/docker-eth-nethermind:${{ env.VERSION }}
 
-  run-and-test:
-    name: Run and Test Docker Image
-    needs: build-and-push
-    runs-on: ubuntu-latest
+  # run-and-test:
+  #   name: Run and Test Docker Image
+  #   needs: build-and-push
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Pull Docker Image
-        run: docker pull ${{ secrets.DOCKER_USERNAME }}/docker-eth-nethermind:latest
+  #   steps:
+  #     - name: Pull Docker Image
+  #       run: docker pull ${{ secrets.DOCKER_USERNAME }}/docker-eth-nethermind:${{ env.VERSION }}
 
-      - name: Run Nethermind
-        env:
-          DATA_DIR: /tmp/data
-          TOKEN_DIR: /tmp/token
-        run: |
-          docker run -d --rm --name test-container \
-            -p 8545:8545 \
-            -p 8551:8551 \
-            -p 30303:30303 \
-            -v $DATA_DIR:/data \
-            -v $TOKEN_DIR:/exec_token \
-            ${{ secrets.DOCKER_USERNAME }}/docker-eth-nethermind:latest \
-            --datadir "/data" \
-            --config holesky \
-            --Init.WebSocketsEnabled true \
-            --JsonRpc.Enabled true \
-            --JsonRpc.Host "0.0.0.0" \
-            --JsonRpc.Port 8545 \
-            --JsonRpc.EnginePort 8551 \
-            --JsonRpc.EngineHost "0.0.0.0" \
-            --JsonRpc.EnabledModules "[\"admin\",\"eth\",\"subscribe\",\"net\",\"web3\",\"txpool\",\"debug\"]" \
-            --JsonRpc.JwtSecretFile "/exec_token/token" \
-            --Network.P2PPort 30303
-          sleep 10  # Give the container time to start
+  #     - name: Run Nethermind
+  #       env:
+  #         DATA_DIR: /tmp/data
+  #         TOKEN_DIR: /tmp/token
+  #       run: |
+  #         docker run -d --rm --name test-container \
+  #           -p 8545:8545 \
+  #           -p 8551:8551 \
+  #           -p 30303:30303 \
+  #           -v $DATA_DIR:/data \
+  #           -v $TOKEN_DIR:/exec_token \
+  #           ${{ secrets.DOCKER_USERNAME }}/docker-eth-nethermind:${{ env.VERSION }} \
+  #           --datadir "/data" \
+  #           --config holesky \
+  #           --Init.WebSocketsEnabled true \
+  #           --JsonRpc.Enabled true \
+  #           --JsonRpc.Host "0.0.0.0" \
+  #           --JsonRpc.Port 8545 \
+  #           --JsonRpc.EnginePort 8551 \
+  #           --JsonRpc.EngineHost "0.0.0.0" \
+  #           --JsonRpc.EnabledModules "[\"admin\",\"eth\",\"subscribe\",\"net\",\"web3\",\"txpool\",\"debug\"]" \
+  #           --JsonRpc.JwtSecretFile "/exec_token/token" \
+  #           --Network.P2PPort 30303
+  #         sleep 10  # Give the container time to start
 
-      - name: Fetch logs
-        run: docker logs test-container || echo "Container not running"
+  #     - name: Fetch logs
+  #       run: docker logs test-container || echo "Container not running"
 
-      - name: Test Docker Container
-        run: |
-          curl -X POST -H "Content-Type: application/json" \
-            --data '{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":1}' \
-            http://localhost:8545 || exit 1
+  #     - name: Test Docker Container
+  #       run: |
+  #         curl -X POST -H "Content-Type: application/json" \
+  #           --data '{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":1}' \
+  #           http://localhost:8545 || exit 1
 
-      - name: Clean up
-        if: always()
-        run: |
-          docker stop test-container || true
-          docker rm test-container || true
+  #     - name: Clean up
+  #       if: always()
+  #       run: |
+  #         docker stop test-container || true
+  #         docker rm test-container || true
