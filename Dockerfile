@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0-noble AS build
 
 # renovate: datasource=github-releases depName=nethermindEth/nethermind
-ARG VERSION=1.33.1
+ARG VERSION=1.35.0
 
 # Set working directory
 WORKDIR /app
