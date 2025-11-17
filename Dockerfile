@@ -12,12 +12,16 @@ RUN apt-get update && apt-get install -y \
     git \
     cmake \
     libsnappy-dev \
-    build-essential
+    build-essential \
+    unzip
 
-# Clone and build Nethermind
-RUN git clone --branch=${VERSION} https://github.com/NethermindEth/nethermind.git \
-    && cd nethermind/src/Nethermind \
-    && dotnet publish Nethermind.Runner -c Release -o /publish --sc false
+# Download nethermind binary
+ADD https://github.com/NethermindEth/nethermind/releases/download/${VERSION}/nethermind-${VERSION}-faa9b9e6-linux-arm64.zip ./
+
+# Extract nethermind binary
+RUN unzip "nethermind-${VERSION}-faa9b9e6-linux-arm64.zip" && \
+    chmod +x nethermind && \
+    rm -f "nethermind-${VERSION}-faa9b9e6-linux-arm64.zip"
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-noble
@@ -26,7 +30,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0-noble
 WORKDIR /nethermind
 
 # Copy the build output from the build stage
-COPY --from=build /publish .
+COPY --from=build /app .
 
 # Define the entrypoint
 ENTRYPOINT ["./nethermind"]
