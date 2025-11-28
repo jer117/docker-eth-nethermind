@@ -16,12 +16,12 @@ RUN apt-get update && apt-get install -y \
     unzip
 
 # Download nethermind binary
-ADD https://github.com/NethermindEth/nethermind/releases/download/${VERSION}/nethermind-${VERSION}-faa9b9e6-linux-arm64.zip ./
+ADD https://github.com/NethermindEth/nethermind/releases/download/${VERSION}/nethermind-${VERSION}-d9febbce-linux-arm64.zip ./
 
 # Extract nethermind binary
-RUN unzip "nethermind-${VERSION}-faa9b9e6-linux-arm64.zip" && \
+RUN unzip "nethermind-${VERSION}-d9febbce-linux-arm64.zip" && \
     chmod +x nethermind && \
-    rm -f "nethermind-${VERSION}-faa9b9e6-linux-arm64.zip"
+    rm -f "nethermind-${VERSION}-d9febbce-linux-arm64.zip"
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-noble
